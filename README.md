@@ -1,0 +1,1 @@
+# Haskell exercising through *Haskell Programming From First Principles* book
