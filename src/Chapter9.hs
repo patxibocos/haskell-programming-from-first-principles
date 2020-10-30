@@ -92,3 +92,20 @@ upperString (x : xs) = toUpper x : upperString xs
 
 headCapitalized :: String -> Char
 headCapitalized = toUpper . head
+
+fixedShift :: Int -> Int -> Char
+fixedShift start o = chr (start + ((o - start) `mod` 26))
+
+shift :: Int -> Char -> Char
+shift s c
+  | c `elem` ['a' .. 'z'] = fixedShift (ord 'a') shiftedOrd
+  | c `elem` ['A' .. 'Z'] = fixedShift (ord 'A') shiftedOrd
+  | otherwise = error "character must be a letter"
+  where
+    shiftedOrd = ord c + s
+
+caesar :: String -> String
+caesar = map $ shift 3
+
+unCaesar :: String -> String
+unCaesar = map $ shift (-3)
