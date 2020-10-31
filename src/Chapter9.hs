@@ -93,19 +93,63 @@ upperString (x : xs) = toUpper x : upperString xs
 headCapitalized :: String -> Char
 headCapitalized = toUpper . head
 
-fixedShift :: Int -> Int -> Char
-fixedShift start o = chr (start + ((o - start) `mod` 26))
-
 shift :: Int -> Char -> Char
 shift s c
-  | c `elem` ['a' .. 'z'] = fixedShift (ord 'a') shiftedOrd
-  | c `elem` ['A' .. 'Z'] = fixedShift (ord 'A') shiftedOrd
+  | c `elem` ['a' .. 'z'] = fixedShift 'a'
+  | c `elem` ['A' .. 'Z'] = fixedShift 'A'
   | otherwise = error "character must be a letter"
   where
     shiftedOrd = ord c + s
+    fixedShift start = chr $ ord start + ((shiftedOrd - ord start) `mod` 26)
 
 caesar :: String -> String
 caesar = map $ shift 3
 
 unCaesar :: String -> String
 unCaesar = map $ shift (-3)
+
+myOr :: [Bool] -> Bool
+myOr [] = False
+myOr (x : xs) = if x then True else myOr xs
+
+myAny :: (a -> Bool) -> [a] -> Bool
+myAny _ [] = False
+myAny f (x : xs) = if (f x) then True else myAny f xs
+
+myElem :: Eq a => a -> [a] -> Bool
+myElem _ [] = False
+myElem e (x : xs) = if e == x then True else myElem e xs
+
+myElem' :: Eq a => a -> [a] -> Bool
+myElem' e xs = any (== e) xs
+
+myReverse :: [a] -> [a]
+myReverse [] = []
+myReverse (x : xs) = myReverse xs ++ [x]
+
+squish :: [[a]] -> [a]
+squish [] = []
+squish (x : xs) = x ++ squish xs
+
+squishMap :: (a -> [b]) -> [a] -> [b]
+squishMap _ [] = []
+squishMap f (x : xs) = f x ++ squishMap f xs
+
+squishAgain :: [[a]] -> [a]
+squishAgain = squishMap id
+
+myMaximumBy :: (a -> a -> Ordering) -> [a] -> a
+myMaximumBy _ [] = error "list must not be empty"
+myMaximumBy _ [x] = x
+myMaximumBy f (x : y : xs) = if f x y == GT then myMaximumBy f (x : xs) else myMaximumBy f (y : xs)
+
+myMinimumBy :: (a -> a -> Ordering) -> [a] -> a
+myMinimumBy _ [] = error "list must not be empty"
+myMinimumBy _ [x] = x
+myMinimumBy f (x : y : xs) = if f x y == LT then myMinimumBy f (x : xs) else myMinimumBy f (y : xs)
+
+myMaximum :: (Ord a) => [a] -> a
+myMaximum = myMaximumBy compare
+
+myMinimum :: (Ord a) => [a] -> a
+myMinimum = myMinimumBy compare
