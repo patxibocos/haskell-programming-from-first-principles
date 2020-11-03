@@ -2,6 +2,8 @@ module Chapter9 where
 
 import Data.Time
 
+-- Exercises: Database Processing
+
 data DatabaseItem
   = DbString String
   | DbNumber Integer
@@ -42,3 +44,20 @@ sumDb = foldr sumNumber 0
 
 avgDb :: [DatabaseItem] -> Double
 avgDb db = fromIntegral (sumDb db) / fromIntegral (length $ filterDbNumber db)
+
+-- Scans Exercises
+
+fibs :: Num a => [a]
+fibs = 1 : scanl (+) 1 fibs
+
+fibsN :: Num a => Int -> a
+fibsN x = fibs !! x
+
+fibs20 :: Num a => [a]
+fibs20 = take 20 fibs
+
+fibsLt100 :: (Num a, Ord a) => [a]
+fibsLt100 = takeWhile (< 100) fibs
+
+factorial :: Int -> Int
+factorial = (!!) $ scanl (*) 1 [1 ..]
