@@ -61,3 +61,26 @@ fibsLt100 = takeWhile (< 100) fibs
 
 factorial :: Int -> Int
 factorial = (!!) $ scanl (*) 1 [1 ..]
+
+-- 10.10 Chapter Exercises
+
+stops :: [Char]
+stops = "pbtdkg"
+
+vowels :: [Char]
+vowels = "aeiou"
+
+stopVowelStop :: [(Char, Char, Char)]
+stopVowelStop = [(s1, v, s2) | s1 <- stops, v <- vowels, s2 <- stops]
+
+stopVowelStopP :: [(Char, Char, Char)]
+stopVowelStopP = [(s1, v, s2) | s1 <- stops, s1 == 'p', v <- vowels, s2 <- stops]
+
+nouns :: [String]
+nouns = ["cat", "dog", "elephant"]
+
+verbs :: [String]
+verbs = ["eats", "smells", "jumps"]
+
+nounVerbNoun :: [(String, String, String)]
+nounVerbNoun = [(n1, v, n2) | n1 <- nouns, v <- verbs, n2 <- nouns]
