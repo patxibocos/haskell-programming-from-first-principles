@@ -84,3 +84,42 @@ verbs = ["eats", "smells", "jumps"]
 
 nounVerbNoun :: [(String, String, String)]
 nounVerbNoun = [(n1, v, n2) | n1 <- nouns, v <- verbs, n2 <- nouns]
+
+seekritFunc :: Fractional a => String -> a
+seekritFunc x = fromIntegral (sum (map length (words x))) / fromIntegral (length (words x))
+
+myOr :: [Bool] -> Bool
+myOr = foldr (||) False
+
+myAny :: (a -> Bool) -> [a] -> Bool
+myAny f = foldr (\a acc -> f a || acc) False
+
+myElem :: Eq a => a -> [a] -> Bool
+myElem e = foldr (\a acc -> a == e || acc) False
+
+myElem' :: Eq a => a -> [a] -> Bool
+myElem' = any . (==)
+
+myReverse :: [a] -> [a]
+myReverse = foldl (flip (:)) []
+
+myMap :: (a -> b) -> [a] -> [b]
+myMap f = foldr ((:) . f) []
+
+myFilter :: (a -> Bool) -> [a] -> [a]
+myFilter f = foldr (\a acc -> if f a then a : acc else acc) []
+
+squish :: [[a]] -> [a]
+squish = foldr (++) []
+
+squishMap :: (a -> [b]) -> [a] -> [b]
+squishMap f = foldr ((++) . f) []
+
+squishAgain :: [[a]] -> [a]
+squishAgain = squishMap id
+
+myMaximumBy :: (a -> a -> Ordering) -> [a] -> a
+myMaximumBy f xs = foldl (\a acc -> if f a acc == GT then a else acc) (head xs) xs
+
+myMinimumBy :: (a -> a -> Ordering) -> [a] -> a
+myMinimumBy f xs = foldl (\a acc -> if f a acc == LT then a else acc) (head xs) xs
