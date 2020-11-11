@@ -1,4 +1,4 @@
-module Chapter9 where
+module Chapter10 where
 
 import Data.Time
 
