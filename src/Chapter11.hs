@@ -2,6 +2,8 @@
 
 module Chapter11 where
 
+import Data.Char
+
 -- Exercises: Vehicles
 
 data Price = Price Integer deriving (Eq, Show)
@@ -118,3 +120,23 @@ postorder (Node left x right) = (postorder left ++ postorder right) ++ [x]
 foldTree :: (a -> b -> b) -> b -> BinaryTree a -> b
 foldTree _ acc Leaf = acc
 foldTree f acc (Node left x right) = foldTree f (f x (foldTree f acc left)) right
+
+-- 11.18 Chapter Exercises
+
+shift :: Char -> Char -> Char
+shift base c
+  | c == ' ' = ' '
+  | c `elem` ['A' .. 'Z'] = chr $ 65 + ((ord c - 65 + ord base - 65) `mod` 26)
+  | otherwise = error "character must be an uppercase letter"
+
+vigenere :: String -> String -> String
+vigenere _ "" = ""
+vigenere "" phrase = phrase
+vigenere keyword x = zipWith shift (keyGenerator keyword x) x
+
+keyGenerator :: String -> String -> String
+keyGenerator keyword = go (concat $ repeat keyword)
+  where
+    go k (' ' : xs) = ' ' : go k xs
+    go (k : ks) (_ : xs) = k : go ks xs
+    go _ _ = ""
