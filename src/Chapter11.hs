@@ -169,6 +169,8 @@ capitalizeParagraph p =
     mustCapitalize [] = True
     mustCapitalize x = last (last x) == '.'
 
+-- Phone exercise
+
 type Digit = Char
 
 type Presses = Int
@@ -225,3 +227,17 @@ cellPhonesDead phone = concatMap (reverseTaps phone)
 
 fingerTaps :: [(Digit, Presses)] -> Presses
 fingerTaps = sum . fmap snd
+
+-- Hutton's Razor
+
+data Expr
+  = Lit Integer
+  | Add Expr Expr
+
+eval :: Expr -> Integer
+eval (Lit x) = x
+eval (Add x y) = eval x + eval y
+
+printExpr :: Expr -> String
+printExpr (Lit x) = show x
+printExpr (Add x y) = printExpr x ++ " + " ++ printExpr y
