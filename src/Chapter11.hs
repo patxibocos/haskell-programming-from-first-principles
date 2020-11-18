@@ -3,6 +3,7 @@
 module Chapter11 where
 
 import Data.Char
+import Data.List
 
 -- Exercises: Vehicles
 
@@ -126,7 +127,7 @@ foldTree f acc (Node left x right) = foldTree f (f x (foldTree f acc left)) righ
 shift :: Char -> Char -> Char
 shift base c
   | c == ' ' = ' '
-  | c `elem` ['A' .. 'Z'] = chr $ 65 + ((ord c - 65 + ord base - 65) `mod` 26)
+  | c `elem` ['A' .. 'Z'] = chr $ 65 + (ord c + ord base) `mod` 26
   | otherwise = error "character must be an uppercase letter"
 
 vigenere :: String -> String -> String
@@ -140,3 +141,87 @@ keyGenerator keyword = go (concat $ repeat keyword)
     go k (' ' : xs) = ' ' : go k xs
     go (k : ks) (_ : xs) = k : go ks xs
     go _ _ = ""
+
+isSubseqOf :: (Eq a) => [a] -> [a] -> Bool
+isSubseqOf a@(x : xs) (y : ys) = if x == y then isSubseqOf xs ys else isSubseqOf a ys
+isSubseqOf [] _ = True
+isSubseqOf _ _ = False
+
+capitalizeWords :: String -> [(String, String)]
+capitalizeWords = fmap (\w@(x : xs) -> (w, toUpper x : xs)) . words
+
+capitalizeWord :: String -> String
+capitalizeWord [] = ""
+capitalizeWord (x : xs) = toUpper x : xs
+
+capitalizeParagraph :: String -> String
+capitalizeParagraph p =
+  unwords $
+    foldl
+      ( \acc a ->
+          if mustCapitalize acc
+            then acc ++ [capitalizeWord a]
+            else acc ++ [a]
+      )
+      []
+      (words p)
+  where
+    mustCapitalize [] = True
+    mustCapitalize x = last (last x) == '.'
+
+type Digit = Char
+
+type Presses = Int
+
+type Letters = [Char]
+
+data DaPhone = DaPhone [(Digit, Letters)]
+
+convo :: [String]
+convo =
+  [ "Wanna play 20 questions",
+    "Ya",
+    "U 1st haha",
+    "Lol ok. Have u ever tasted alcohol",
+    "Lol ya",
+    "Wow ur cool haha. Ur turn",
+    "Ok. Do u think I am pretty Lol",
+    "Lol ya",
+    "Just making sure rofl ur turn"
+  ]
+
+daPhone :: DaPhone
+daPhone =
+  DaPhone
+    [ ('1', "1"),
+      ('2', "abc"),
+      ('3', "def"),
+      ('4', "ghi"),
+      ('5', "jkl"),
+      ('6', "mno"),
+      ('7', "pqrs"),
+      ('8', "tuv"),
+      ('9', "wxyz"),
+      ('*', "*^"),
+      ('0', " +_"),
+      ('#', "#.,")
+    ]
+
+reverseTaps :: DaPhone -> Char -> [(Digit, Presses)]
+reverseTaps phone@(DaPhone p) c
+  | c `elem` ['A' .. 'Z'] = ('*', 1) : reverseTaps phone (chr (ord c + 32))
+  | otherwise =
+    foldr
+      ( \a acc ->
+          case elemIndex c (snd a) of
+            Just i -> [(fst a, i + 1)]
+            Nothing -> acc
+      )
+      []
+      p
+
+cellPhonesDead :: DaPhone -> String -> [(Digit, Presses)]
+cellPhonesDead phone = concatMap (reverseTaps phone)
+
+fingerTaps :: [(Digit, Presses)] -> Presses
+fingerTaps = sum . fmap snd
