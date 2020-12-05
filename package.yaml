@@ -25,3 +25,5 @@ library:
   source-dirs: src
   dependencies:
     - time
+    - hspec
+    - QuickCheck

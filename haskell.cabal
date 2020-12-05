@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 10a8fc5611a2545057d463f2aca4a61a7032d3e009de9280992684b9e862452a
+-- hash: 4240add418ac2474dd9a5f18f3c4f248d73d1fdaf4dc1d6a5c5c3473cab70abb
 
 name:           haskell
 version:        0.1.0.0
@@ -28,6 +28,7 @@ library
       Chapter10
       Chapter11
       Chapter12
+      Chapter14
       Chapter6
       Chapter7
       Chapter8
@@ -37,6 +38,8 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      QuickCheck
+    , base >=4.7 && <5
+    , hspec
     , time
   default-language: Haskell2010
