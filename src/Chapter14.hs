@@ -4,6 +4,7 @@ module Chapter14 where
 
 import Chapter11 (capitalizeWord)
 import Chapter8 (digitToWord, digits, wordNumber)
+import Chapter9 (caesar, unCaesar)
 import Data.List
 import Test.Hspec
 import Test.QuickCheck
@@ -162,6 +163,27 @@ prop_capitalizeIdempotent = forAll (arbitrary :: Gen String) capitalizeIdempoten
 
 prop_sortIdempotent :: Property
 prop_sortIdempotent = forAll (arbitrary :: Gen [Int]) sortIdempotent
+
+-- Make a Gen random generator for the datatype
+
+data Fool
+  = Fulse
+  | Frue
+  deriving (Eq, Show)
+
+equalProbabilityGen :: Gen Fool
+equalProbabilityGen = elements [Fulse, Frue]
+
+thirdsProbabilityGen :: Gen Fool
+thirdsProbabilityGen = frequency [(2, return Fulse), (1, return Frue)]
+
+-- Validating ciphers
+
+letter :: Gen Char
+letter = arbitrary `suchThat` (\a -> a `elem` ['a' .. 'z'] || a `elem` ['A' .. 'Z'])
+
+prop_caesar :: Property
+prop_caesar = forAll (listOf letter) (\a -> (unCaesar . caesar) a == a)
 
 return []
 
