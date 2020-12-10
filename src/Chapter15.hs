@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TupleSections #-}
 
 module Chapter15 where
 
@@ -66,6 +67,8 @@ instance Arbitrary a => Arbitrary (First' a) where
   arbitrary = firstGen
 
 -- 15.15 Chapter exercises
+
+-- Semigroup exercises
 
 semigroupAssoc :: (Eq m, Semigroup m) => m -> m -> m -> Bool
 semigroupAssoc a b c = (a <> (b <> c)) == ((a <> b) <> c)
@@ -221,6 +224,73 @@ type ValidationAssoc = Validation String Int -> Validation String Int -> Validat
 
 prop_validationAssoc :: ValidationAssoc
 prop_validationAssoc = semigroupAssoc
+
+-- Monoid exercises
+
+monoidLeftIdentity :: (Eq m, Monoid m) => m -> Bool
+monoidLeftIdentity a = mempty <> a == a
+
+monoidRightIdentity :: (Eq m, Monoid m) => m -> Bool
+monoidRightIdentity a = a <> mempty == a
+
+instance Monoid Trivial where
+  mempty = Trivial
+
+prop_trivialLeftIdentity :: Trivial -> Bool
+prop_trivialLeftIdentity = monoidLeftIdentity
+
+prop_trivialRightIdentity :: Trivial -> Bool
+prop_trivialRightIdentity = monoidRightIdentity
+
+instance (Monoid a) => Monoid (Identity a) where
+  mempty = Identity mempty
+
+prop_identityLeftIdentity :: Identity String -> Bool
+prop_identityLeftIdentity = monoidLeftIdentity
+
+prop_identityRightIdentity :: Identity String -> Bool
+prop_identityRightIdentity = monoidRightIdentity
+
+instance (Monoid a, Monoid b) => Monoid (Two a b) where
+  mempty = Two mempty mempty
+
+prop_twoLeftIdentity :: Two (Sum Int) String -> Bool
+prop_twoLeftIdentity = monoidLeftIdentity
+
+prop_twoRightIdentity :: Two (Sum Int) String -> Bool
+prop_twoRightIdentity = monoidRightIdentity
+
+instance Monoid BoolConj where
+  mempty = BoolConj True
+
+prop_boolConjLeftIdentity :: BoolConj -> Bool
+prop_boolConjLeftIdentity = monoidLeftIdentity
+
+prop_boolConjRightIdentity :: BoolConj -> Bool
+prop_boolConjRightIdentity = monoidRightIdentity
+
+instance Monoid BoolDisj where
+  mempty = BoolDisj False
+
+prop_boolDisjLeftIdentity :: BoolDisj -> Bool
+prop_boolDisjLeftIdentity = monoidLeftIdentity
+
+prop_boolDisjRightIdentity :: BoolDisj -> Bool
+prop_boolDisjRightIdentity = monoidRightIdentity
+
+instance (Monoid b) => Monoid (Combine a b) where
+  mempty = Combine mempty
+
+instance (Monoid a) => Monoid (Comp a) where
+  mempty = Comp mempty
+
+newtype Mem s a = Mem {runMem :: s -> (a, s)}
+
+instance (Semigroup a, Semigroup s) => Semigroup (Mem s a) where
+  (Mem f) <> (Mem g) = Mem (f <> g)
+
+instance (Monoid a, Monoid s) => Monoid (Mem s a) where
+  mempty = Mem (mempty,) -- Tuple sectioning, same as (\s -> (mempty, s))
 
 return []
 
