@@ -1,7 +1,9 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Chapter15 where
 
 import Data.Semigroup
-import Test.QuickCheck
+import Test.QuickCheck (Arbitrary, CoArbitrary, Gen, arbitrary, elements, frequency, quickCheckAll)
 
 -- Exercise: Optional Monoid
 
@@ -78,6 +80,9 @@ instance Arbitrary Trivial where
 
 type TrivAssoc = Trivial -> Trivial -> Trivial -> Bool
 
+prop_trivAssoc :: TrivAssoc
+prop_trivAssoc = semigroupAssoc
+
 newtype Identity a = Identity a deriving (Eq, Show)
 
 instance Semigroup a => Semigroup (Identity a) where
@@ -88,6 +93,9 @@ instance Arbitrary a => Arbitrary (Identity a) where
 
 type IdentityAssoc = Identity String -> Identity String -> Identity String -> Bool
 
+prop_identityAssoc :: IdentityAssoc
+prop_identityAssoc = semigroupAssoc
+
 data Two a b = Two a b deriving (Eq, Show)
 
 instance (Semigroup a, Semigroup b) => Semigroup (Two a b) where
@@ -97,6 +105,9 @@ instance (Arbitrary a, Arbitrary b) => Arbitrary (Two a b) where
   arbitrary = Two <$> arbitrary <*> arbitrary
 
 type TwoAssoc = Two (Sum Int) (Product Int) -> Two (Sum Int) (Product Int) -> Two (Sum Int) (Product Int) -> Bool
+
+prop_twoAssoc :: TwoAssoc
+prop_twoAssoc = semigroupAssoc
 
 data Three a b c = Three a b c deriving (Eq, Show)
 
@@ -112,6 +123,9 @@ type ThreeAssoc =
   Three (Sum Int) (Product Int) (Sum Int) ->
   Bool
 
+prop_threeAssoc :: ThreeAssoc
+prop_threeAssoc = semigroupAssoc
+
 data Four a b c d = Four a b c d deriving (Eq, Show)
 
 instance (Semigroup a, Semigroup b, Semigroup c, Semigroup d) => Semigroup (Four a b c d) where
@@ -126,6 +140,9 @@ type FourAssoc =
   Four (Sum Int) (Product Int) (Sum Int) (Product Int) ->
   Bool
 
+prop_fourAssoc :: FourAssoc
+prop_fourAssoc = semigroupAssoc
+
 newtype BoolConj = BoolConj Bool deriving (Eq, Show)
 
 instance Semigroup BoolConj where
@@ -137,6 +154,9 @@ instance Arbitrary BoolConj where
 
 type BoolConjAssoc = BoolConj -> BoolConj -> BoolConj -> Bool
 
+prop_boolConjAssoc :: BoolConjAssoc
+prop_boolConjAssoc = semigroupAssoc
+
 newtype BoolDisj = BoolDisj Bool deriving (Eq, Show)
 
 instance Semigroup BoolDisj where
@@ -147,6 +167,9 @@ instance Arbitrary BoolDisj where
   arbitrary = BoolDisj <$> arbitrary
 
 type BoolDisjAssoc = BoolDisj -> BoolDisj -> BoolDisj -> Bool
+
+prop_boolDisjAssoc :: BoolDisjAssoc
+prop_boolDisjAssoc = semigroupAssoc
 
 data Or a b = Fst a | Snd b deriving (Eq, Show)
 
@@ -162,12 +185,44 @@ instance (Arbitrary a, Arbitrary b) => Arbitrary (Or a b) where
 
 type OrAssoc = Or String Int -> Or String Int -> Or String Int -> Bool
 
+prop_orAssoc :: OrAssoc
+prop_orAssoc = semigroupAssoc
+
 newtype Combine a b = Combine {unCombine :: a -> b}
 
 instance (Semigroup b) => Semigroup (Combine a b) where
   (Combine f) <> (Combine g) = Combine (f <> g)
 
 instance (CoArbitrary a, Arbitrary b) => Arbitrary (Combine a b) where
-  arbitrary = Combine <$> (arbitrary :: (CoArbitrary a, Arbitrary b) => Gen (a -> b))
+  arbitrary = Combine <$> arbitrary
 
-type CombineAssoc = Combine Int String -> Combine Int String -> Combine Int String -> Bool
+newtype Comp a = Comp {unComp :: a -> a}
+
+instance Semigroup (Comp a) where
+  (Comp f) <> (Comp g) = Comp $ f . g
+
+instance (CoArbitrary a, Arbitrary a) => Arbitrary (Comp a) where
+  arbitrary = Comp <$> arbitrary
+
+data Validation a b = Failure a | Success b deriving (Eq, Show)
+
+instance Semigroup a => Semigroup (Validation a b) where
+  s@(Success _) <> _ = s
+  _ <> s@(Success _) = s
+  (Failure f1) <> (Failure f2) = Failure $ f1 <> f2
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Validation a b) where
+  arbitrary = do
+    a <- arbitrary
+    b <- arbitrary
+    elements [Failure a, Success b]
+
+type ValidationAssoc = Validation String Int -> Validation String Int -> Validation String Int -> Bool
+
+prop_validationAssoc :: ValidationAssoc
+prop_validationAssoc = semigroupAssoc
+
+return []
+
+runTests :: IO Bool
+runTests = $quickCheckAll
