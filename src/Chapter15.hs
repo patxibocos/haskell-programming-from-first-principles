@@ -289,7 +289,7 @@ newtype Mem s a = Mem {runMem :: s -> (a, s)}
 instance (Semigroup a, Semigroup s) => Semigroup (Mem s a) where
   (Mem f) <> (Mem g) = Mem (f <> g)
 
-instance (Monoid a, Monoid s) => Monoid (Mem s a) where
+instance (Monoid a, Semigroup s) => Monoid (Mem s a) where
   mempty = Mem (mempty,) -- Tuple sectioning, same as (\s -> (mempty, s))
 
 return []
