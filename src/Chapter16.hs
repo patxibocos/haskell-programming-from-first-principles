@@ -111,6 +111,45 @@ prop_Four'FunctorIdentity = functorIdentity
 prop_Four'FunctorCompose :: Fun Int String -> Fun String Char -> Four' String Int -> Bool
 prop_Four'FunctorCompose (Fun _ f) (Fun _ g) = functorCompose f g
 
+-- Exercise: Possibly
+
+data Possibly a = LolNope | Yeppers a deriving (Eq, Show)
+
+instance Functor Possibly where
+  fmap _ LolNope = LolNope
+  fmap f (Yeppers x) = Yeppers $ f x
+
+instance Arbitrary a => Arbitrary (Possibly a) where
+  arbitrary = do
+    x <- arbitrary
+    frequency [(1, return LolNope), (10, return $ Yeppers x)]
+
+prop_PossiblyFunctorIdentity :: Possibly String -> Bool
+prop_PossiblyFunctorIdentity = functorIdentity
+
+prop_PossiblyFunctorIdentityCompose :: Fun Int String -> Fun String Char -> Possibly Int -> Bool
+prop_PossiblyFunctorIdentityCompose (Fun _ f) (Fun _ g) = functorCompose f g
+
+-- Short Exercise
+
+data Sum a b = First a | Second b deriving (Eq, Show)
+
+instance Functor (Sum a) where
+  fmap _ (First x) = First x
+  fmap f (Second y) = Second $ f y
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Sum a b) where
+  arbitrary = do
+    x <- arbitrary
+    y <- arbitrary
+    elements [First x, Second y]
+
+prop_SumFunctorIdentity :: Sum String Int -> Bool
+prop_SumFunctorIdentity = functorIdentity
+
+prop_SumFunctorIdentityCompose :: Fun Int String -> Fun String Char -> Sum Char Int -> Bool
+prop_SumFunctorIdentityCompose (Fun _ f) (Fun _ g) = functorCompose f g
+
 return []
 
 runTests :: IO Bool
