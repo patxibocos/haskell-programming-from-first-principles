@@ -27,3 +27,4 @@ library:
     - time
     - hspec
     - QuickCheck
+    - checkers

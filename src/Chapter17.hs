@@ -1,6 +1,10 @@
 module Chapter17 where
 
+import Chapter16 (List (Cons, Nil))
 import Data.List (elemIndex)
+import Test.QuickCheck
+import Test.QuickCheck.Checkers
+import Test.QuickCheck.Classes
 
 -- Exercises: Lookups
 
@@ -72,3 +76,69 @@ fix1 = const <$> Just "Hello" <*> pure "World"
 
 fix2 :: Maybe (Integer, Integer, [Char], [Integer])
 fix2 = (,,,) <$> Just 90 <*> Just 10 <*> Just "Tierness" <*> pure [1, 2, 3]
+
+-- List Applicative Exercise
+
+instance Applicative List where -- Orphan instance but ok for this use case
+  pure = flip Cons Nil -- Same as pure a = Cons a Nil
+  fs <*> as = flatten $ fmap (`fmap` as) fs
+
+flatten :: List (List a) -> List a
+flatten Nil = Nil
+flatten (Cons x Nil) = x
+flatten (Cons x y) = x `combine` flatten y
+
+combine :: List a -> List a -> List a
+combine Nil y = y
+combine x Nil = x
+combine (Cons x xs) y = Cons x (xs `combine` y)
+
+instance (Eq a) => EqProp (List a) where (=-=) = eq
+
+listApplicative :: TestBatch
+listApplicative = applicative (Cons ("a", 2 :: Int, 'c') Nil)
+
+-- ZipList Applicative Exercise
+
+take' :: Int -> List a -> List a
+take' _ Nil = Nil
+take' 0 _ = Nil
+take' n (Cons a as) = Cons a (take' (n -1) as)
+
+newtype ZipList' a = ZipList' (List a) deriving (Eq, Show)
+
+instance Eq a => EqProp (ZipList' a) where
+  xs =-= ys = xs' `eq` ys'
+    where
+      xs' =
+        let (ZipList' l) = xs
+         in take' 3000 l
+      ys' =
+        let (ZipList' l) = ys
+         in take' 3000 l
+
+instance Functor ZipList' where
+  fmap f (ZipList' xs) =
+    ZipList' $ fmap f xs
+
+instance (Arbitrary a) => Arbitrary (ZipList' a) where
+  arbitrary = ZipList' <$> arbitrary
+
+instance Applicative ZipList' where
+  pure a = ZipList' $ Cons a Nil
+  (ZipList' fs) <*> (ZipList' as) = ZipList' (zipLists fs as)
+
+zipLists :: List (a -> b) -> List a -> List b
+zipLists Nil _ = Nil
+zipLists _ Nil = Nil
+zipLists (Cons f Nil) (Cons a as) = Cons (f a) (f <$> as)
+zipLists (Cons f fs) (Cons a Nil) = Cons (f a) (fs <*> pure a)
+zipLists (Cons f fs) (Cons a as) = Cons (f a) (zipLists fs as)
+
+zipListApplicative :: TestBatch
+zipListApplicative = applicative (ZipList' $ Cons ("a", 2 :: Int, 'c') Nil)
+
+runTests :: IO ()
+runTests = do
+  quickBatch listApplicative
+  quickBatch zipListApplicative

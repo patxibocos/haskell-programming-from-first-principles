@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 73fa45d027ea4f7de68c313de5e95effaf7114b4c021e608e8ab8c4260b52ef1
+-- hash: 3f20356474559639a4688eeab5c8704bd64b09e8e744f4dbced7283ccf0ec5d9
 
 name:           haskell
 version:        0.1.0.0
@@ -43,6 +43,7 @@ library
   build-depends:
       QuickCheck
     , base >=4.7 && <5
+    , checkers
     , hspec
     , time
   default-language: Haskell2010
