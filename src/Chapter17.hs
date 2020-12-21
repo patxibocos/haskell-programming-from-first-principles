@@ -1,8 +1,11 @@
 module Chapter17 where
 
-import Chapter16 (List (Cons, Nil))
+import Chapter15 (Four (Four), Three (Three), Two (Two))
+import Chapter16 (Four' (Four'), List (Cons, Nil), Pair (Pair), Three' (Three'))
+import Control.Applicative (liftA3)
 import Data.List (elemIndex)
-import Test.QuickCheck
+import Test.QuickCheck (elements)
+import Test.QuickCheck.Arbitrary
 import Test.QuickCheck.Checkers
 import Test.QuickCheck.Classes
 
@@ -95,9 +98,6 @@ combine (Cons x xs) y = Cons x (xs `combine` y)
 
 instance (Eq a) => EqProp (List a) where (=-=) = eq
 
-listApplicative :: TestBatch
-listApplicative = applicative (Cons ("a", 2 :: Int, 'c') Nil)
-
 -- ZipList Applicative Exercise
 
 take' :: Int -> List a -> List a
@@ -132,13 +132,89 @@ zipLists :: List (a -> b) -> List a -> List b
 zipLists Nil _ = Nil
 zipLists _ Nil = Nil
 zipLists (Cons f Nil) (Cons a as) = Cons (f a) (f <$> as)
-zipLists (Cons f fs) (Cons a Nil) = Cons (f a) (fs <*> pure a)
+zipLists (Cons f fs) as@(Cons a Nil) = Cons (f a) (fs <*> as)
 zipLists (Cons f fs) (Cons a as) = Cons (f a) (zipLists fs as)
 
-zipListApplicative :: TestBatch
-zipListApplicative = applicative (ZipList' $ Cons ("a", 2 :: Int, 'c') Nil)
+-- Exercise: Variations on Either
+
+data Validation e a
+  = Failure e
+  | Success a
+  deriving (Eq, Show)
+
+instance Functor (Validation e) where
+  fmap _ (Failure e) = Failure e
+  fmap f (Success a) = Success $ f a
+
+instance Monoid e => Applicative (Validation e) where
+  pure = Success
+  (Success f) <*> (Success a) = Success $ f a
+  (Failure e1) <*> (Failure e2) = Failure $ e1 `mappend` e2
+  (Success _) <*> (Failure e) = Failure e
+  (Failure e) <*> (Success _) = Failure e
+
+instance (Arbitrary a, Arbitrary e) => Arbitrary (Validation e a) where
+  arbitrary = do
+    a <- arbitrary
+    e <- arbitrary
+    elements [Success a, Failure e]
+
+instance (Eq e, Eq a) => EqProp (Validation e a) where (=-=) = eq
+
+-- 17.9 Chapter Exercises
+
+instance Applicative Pair where
+  pure a = Pair a a
+  (Pair f1 f2) <*> (Pair x y) = Pair (f1 x) (f2 y)
+
+instance (Eq a) => EqProp (Pair a) where (=-=) = eq
+
+instance (Monoid a) => Applicative (Two a) where
+  pure b = Two mempty b
+  (Two x f) <*> (Two x' y) = Two (x <> x') (f y)
+
+instance (Eq a, Eq b) => EqProp (Two a b) where (=-=) = eq
+
+instance (Monoid a, Monoid b) => Applicative (Three a b) where
+  pure c = Three mempty mempty c
+  (Three a b f) <*> (Three a' b' c) = Three (a <> a') (b <> b') (f c)
+
+instance (Eq a, Eq b, Eq c) => EqProp (Three a b c) where (=-=) = eq
+
+instance (Monoid a) => Applicative (Three' a) where
+  pure b = Three' mempty b b
+  (Three' a f1 f2) <*> (Three' a' b1 b2) = Three' (a <> a') (f1 b1) (f2 b2)
+
+instance (Eq a, Eq b) => EqProp (Three' a b) where (=-=) = eq
+
+instance (Monoid a, Monoid b, Monoid c) => Applicative (Four a b c) where
+  pure d = Four mempty mempty mempty d
+  (Four a b c f) <*> (Four a' b' c' d) = Four (a <> a') (b <> b') (c <> c') (f d)
+
+instance (Eq a, Eq b, Eq c, Eq d) => EqProp (Four a b c d) where (=-=) = eq
+
+instance (Monoid a) => Applicative (Four' a) where
+  pure b = Four' mempty mempty mempty b
+  (Four' a1 a2 a3 f) <*> (Four' a1' a2' a3' b) = Four' (a1 <> a1') (a2 <> a2') (a3 <> a3') (f b)
+
+instance (Eq a, Eq b) => EqProp (Four' a b) where (=-=) = eq
+
+-- Combinations
+
+combos :: [a] -> [b] -> [c] -> [(a, b, c)]
+combos = liftA3 (,,)
+
+triple :: (String, String, String)
+triple = ("a", "b", "c")
 
 runTests :: IO ()
 runTests = do
-  quickBatch listApplicative
-  quickBatch zipListApplicative
+  quickBatch $ applicative (Cons triple Nil)
+  quickBatch $ applicative (ZipList' $ Cons triple Nil)
+  quickBatch $ applicative (Success triple :: Validation String (String, String, String))
+  quickBatch $ applicative (Pair triple triple)
+  quickBatch $ applicative (Two triple triple)
+  quickBatch $ applicative (Three triple triple triple)
+  quickBatch $ applicative (Three' triple triple triple)
+  quickBatch $ applicative (Four triple triple triple triple)
+  quickBatch $ applicative (Four' triple triple triple triple)
