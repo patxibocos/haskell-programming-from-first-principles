@@ -1,6 +1,6 @@
 module Chapter18 where
 
-import Chapter16 (List (Cons, Nil), Sum (First, Second))
+import Chapter16 (List, Sum (First, Second))
 import Chapter17 (Identity (Identity), flatten)
 import Control.Monad
 import Test.QuickCheck (elements)
@@ -72,7 +72,6 @@ instance (Arbitrary a) => Arbitrary (Identity a) where
 instance (Eq a) => EqProp (Identity a) where (=-=) = eq
 
 instance Monad List where
-  Nil >>= _ = Nil
   as >>= f = flatten $ fmap f as
 
 j :: Monad m => m (m a) -> m a
