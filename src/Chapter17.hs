@@ -1,6 +1,6 @@
 module Chapter17 where
 
-import Chapter15 (Four (Four), Three (Three), Two (Two))
+import Chapter15 (Four (Four), Identity (Identity), Three (Three), Two (Two))
 import Chapter16 (Four' (Four'), List (Cons, Nil), Pair (Pair), Three' (Three'))
 import Control.Applicative (liftA3)
 import Data.List (elemIndex)
@@ -52,11 +52,6 @@ summed = fmap sum $ (,) <$> x3 <*> y3
 
 -- Exercise: Identity Instance
 
-newtype Identity a = Identity a deriving (Eq, Ord, Show)
-
-instance Functor Identity where
-  fmap f (Identity a) = Identity $ f a
-
 instance Applicative Identity where
   pure = Identity
   (Identity f) <*> (Identity a) = Identity $ f a
@@ -66,7 +61,7 @@ instance Applicative Identity where
 newtype Constant a b = Constant {getConstant :: a} deriving (Eq, Ord, Show)
 
 instance Functor (Constant a) where
-  fmap _ (Constant b) = Constant b
+  fmap _ (Constant a) = Constant a
 
 instance Monoid a => Applicative (Constant a) where
   pure _ = Constant mempty
