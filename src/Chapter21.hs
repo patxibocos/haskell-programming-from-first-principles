@@ -86,6 +86,36 @@ instance Traversable n => Traversable (S n) where
 instance (Functor n, Arbitrary (n a), Arbitrary a) => Arbitrary (S n a) where
   arbitrary = S <$> arbitrary <*> arbitrary
 
+data Tree a
+  = Empty
+  | Leaf a
+  | Node (Tree a) a (Tree a)
+  deriving (Eq, Show)
+
+instance Functor Tree where
+  fmap _ Empty = Empty
+  fmap f (Leaf a) = Leaf $ f a
+  fmap f (Node n1 a n2) = Node (fmap f n1) (f a) (fmap f n2)
+
+instance Foldable Tree where
+  foldMap _ Empty = mempty
+  foldMap f (Leaf a) = f a
+  foldMap f (Node n1 a n2) = foldMap f n1 <> f a <> foldMap f n2
+
+instance Traversable Tree where
+  traverse _ Empty = pure Empty
+  traverse f (Leaf a) = Leaf <$> f a
+  traverse f (Node n1 a n2) = Node <$> traverse f n1 <*> f a <*> traverse f n2
+
+instance (Arbitrary a) => Arbitrary (Tree a) where
+  arbitrary = do
+    a <- arbitrary
+    n1 <- arbitrary
+    n2 <- arbitrary
+    elements [Empty, Leaf a, Node n1 a n2]
+
+instance (Eq a) => EqProp (Tree a) where (=-=) = eq
+
 type Triple = (Int, Int, [Int])
 
 runTests :: IO ()
@@ -99,3 +129,4 @@ runTests = do
   quickBatch $ traversable (undefined :: (Three' Int Triple))
   quickBatch $ traversable (undefined :: (Four' Int Triple))
   quickBatch $ traversable (undefined :: (S Maybe Triple))
+  quickBatch $ traversable (undefined :: (Tree Triple))
