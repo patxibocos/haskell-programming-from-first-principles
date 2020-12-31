@@ -1,7 +1,8 @@
 module Chapter18 where
 
+import Chapter15 (Identity (Identity))
 import Chapter16 (List, Sum (First, Second))
-import Chapter17 (Identity (Identity), flatten)
+import Chapter17 (flatten)
 import Control.Monad
 import Test.QuickCheck (elements)
 import Test.QuickCheck.Arbitrary
@@ -65,9 +66,6 @@ instance (Eq b, Eq a) => EqProp (PhhhbbtttEither b a) where (=-=) = eq
 
 instance Monad Identity where
   (Identity a) >>= f = f a
-
-instance (Arbitrary a) => Arbitrary (Identity a) where
-  arbitrary = Identity <$> arbitrary
 
 instance (Eq a) => EqProp (Identity a) where (=-=) = eq
 

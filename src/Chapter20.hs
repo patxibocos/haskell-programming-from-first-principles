@@ -63,7 +63,7 @@ instance Foldable (Three a b) where
 instance Foldable (Three' a) where
   foldMap f (Three' _ b1 b2) = f b1 <> f b2
 
-data Four' a b = Four' a b b b deriving (Show)
+data Four' a b = Four' a b b b deriving (Eq, Show)
 
 instance Foldable (Four' a) where
   foldMap f (Four' _ b1 b2 b3) = f b1 <> f b2 <> f b3

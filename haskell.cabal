@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.3.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d1a777d31beb919a4a1b2b411afc3b143713402fb0da5a5efe671ee715474fd4
+-- hash: 8988a482aec7d312e004bbfd178e68f00a9591f462030b2274fd3b9a6bd2334e
 
 name:           haskell
 version:        0.1.0.0
@@ -33,6 +33,8 @@ library
       Chapter16
       Chapter17
       Chapter18
+      Chapter20
+      Chapter21
       Chapter6
       Chapter7
       Chapter8
