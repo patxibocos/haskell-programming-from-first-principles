@@ -1,3 +1,5 @@
+{-# LANGUAGE InstanceSigs #-}
+
 module Chapter22 where
 
 import Control.Applicative (liftA2)
@@ -31,3 +33,28 @@ tupledM = do
 
 tupledM' :: [Char] -> ([Char], [Char])
 tupledM' = cap >>= \c -> rev >>= \r -> return (c, r)
+
+-- Exercise: Ask
+
+newtype Reader r a = Reader {runReader :: r -> a}
+
+ask :: Reader a a
+ask = Reader id
+
+-- Exercise: Reading Comprehension
+
+myLiftA2 :: Applicative f => (a -> b -> c) -> f a -> f b -> f c
+myLiftA2 f fa fb = f <$> fa <*> fb
+
+asks :: (r -> a) -> Reader r a
+asks f = Reader f
+
+instance Functor (Reader r) where
+  fmap f (Reader ra) = Reader $ f . ra
+
+instance Applicative (Reader r) where
+  pure :: a -> Reader r a
+  pure a = Reader $ const a
+
+  (<*>) :: Reader r (a -> b) -> Reader r a -> Reader r b
+  (Reader rab) <*> (Reader ra) = Reader $ \r -> rab r (ra r)
