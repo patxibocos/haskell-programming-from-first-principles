@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2521f54d6d5ad03ca6452df874e1721fc5d06f81dc9176549e0e5ed6f7e33d00
+-- hash: 64ca5d8be7bf079597498546d96e6c71ef0c4e04e2b41e08100de033c6949db2
 
 name:           haskell
 version:        0.1.0.0
@@ -52,4 +52,5 @@ library
     , hspec
     , random
     , time
+    , transformers
   default-language: Haskell2010
