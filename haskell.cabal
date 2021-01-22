@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 64ca5d8be7bf079597498546d96e6c71ef0c4e04e2b41e08100de033c6949db2
+-- hash: 917a8b963cad7878ed012e6b75f9850c3b64bc9ff7a72a4da69ad82a093a6d87
 
 name:           haskell
 version:        0.1.0.0
@@ -37,6 +37,7 @@ library
       Chapter21
       Chapter22
       Chapter23
+      Chapter24
       Chapter6
       Chapter7
       Chapter8
@@ -53,4 +54,5 @@ library
     , random
     , time
     , transformers
+    , trifecta
   default-language: Haskell2010

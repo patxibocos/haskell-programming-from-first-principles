@@ -30,3 +30,4 @@ library:
     - checkers
     - random
     - transformers
+    - trifecta
