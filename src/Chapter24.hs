@@ -36,3 +36,63 @@ type DoubleOrFraction = Either Double Rational
 
 parseDof :: Parser DoubleOrFraction
 parseDof = Left <$> try double <|> Right <$> try parseFraction
+
+-- 24.11 Chapter Exercises
+
+data NumberOrString
+  = NOSS String
+  | NOSI Integer
+  deriving (Eq, Ord, Show)
+
+type Major = Integer
+
+type Minor = Integer
+
+type Patch = Integer
+
+type Release = [NumberOrString]
+
+type Metadata = [NumberOrString]
+
+data SemVer = SemVer Major Minor Patch Release Metadata deriving (Show)
+
+parseSemVer :: Parser SemVer
+parseSemVer = do
+  (major, minor, patch) <- parseVersion
+  release <- option [] parseRelease
+  metadata <- option [] parseMetadata
+  return $ SemVer major minor patch release metadata
+
+parseVersion :: Parser (Major, Minor, Patch)
+parseVersion = do
+  major <- integer
+  _ <- char '.'
+  minor <- integer
+  _ <- char '.'
+  patch <- integer
+  return (major, minor, patch)
+
+parseRelease :: Parser [NumberOrString]
+parseRelease = char '-' *> parseNumberOrString `sepBy` char '.'
+
+parseMetadata :: Parser [NumberOrString]
+parseMetadata = char '+' *> parseNumberOrString `sepBy` char '.'
+
+parseNumberOrString :: Parser NumberOrString
+parseNumberOrString = NOSI <$> try (integer <* notFollowedBy anyChar) <|> NOSS <$> some alphaNum
+
+instance Eq SemVer where
+  (SemVer major1 minor1 patch1 release1 _) == (SemVer major2 minor2 patch2 release2 _) =
+    major1 == major2 && minor1 == minor2 && patch1 == patch2 && release1 == release2
+
+instance Ord SemVer where
+  (SemVer major1 minor1 patch1 release1 _) `compare` (SemVer major2 minor2 patch2 release2 _) =
+    major1 `compare` major2
+      <> minor1 `compare` minor2
+      <> patch1 `compare` patch2
+      <> release1 `compareRelease` release2
+    where
+      [] `compareRelease` [] = EQ
+      [] `compareRelease` _ = GT
+      _ `compareRelease` [] = LT
+      r1 `compareRelease` r2 = r1 `compare` r2
