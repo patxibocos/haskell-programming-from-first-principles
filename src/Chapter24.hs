@@ -1,6 +1,8 @@
 module Chapter24 where
 
 import Control.Applicative
+import Control.Monad
+import Data.Char
 import Data.Ratio ((%))
 import Text.Trifecta
 
@@ -96,3 +98,54 @@ instance Ord SemVer where
       [] `compareRelease` _ = GT
       _ `compareRelease` [] = LT
       r1 `compareRelease` r2 = r1 `compare` r2
+
+parseDigit :: Parser Char
+parseDigit = oneOf ['0' .. '9']
+
+base10Integer :: Parser Integer
+base10Integer = toInteger . foldl (\a b -> a * 10 + digitToInt b) 0 <$> some parseDigit
+
+base10Integer' :: Parser Integer
+base10Integer' = char '-' *> (negate <$> base10Integer) <|> base10Integer
+
+-- aka area code
+type NumberingPlanArea = Int
+
+type Exchange = Int
+
+type LineNumber = Int
+
+data PhoneNumber
+  = PhoneNumber
+      NumberingPlanArea
+      Exchange
+      LineNumber
+  deriving (Eq, Show)
+
+parsePhone :: Parser PhoneNumber
+parsePhone = do
+  numberingPlanArea <- parseNumberingPlanArea
+  _ <- skipSeparator
+  exchange <- parseExchange
+  _ <- skipSeparator
+  lineNumber <- parseLineNumber
+  return $ PhoneNumber numberingPlanArea exchange lineNumber
+  where
+    skipSeparator = skipOptional $ oneOf " -"
+
+parseNumberingPlanArea :: Parser NumberingPlanArea
+parseNumberingPlanArea =
+  read
+    <$> ( between (char '(') (char ')') (digits 3) <* space
+            <|> string "1-" *> digits 3
+            <|> digits 3
+        )
+
+parseExchange :: Parser Exchange
+parseExchange = read <$> digits 3
+
+parseLineNumber :: Parser LineNumber
+parseLineNumber = read <$> digits 4
+
+digits :: Int -> Parser String
+digits n = replicateM n digit
