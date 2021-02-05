@@ -3,7 +3,10 @@ module Chapter24 where
 import Control.Applicative
 import Control.Monad
 import Data.Char
+import Data.List
 import Data.Ratio ((%))
+import Data.Time (TimeOfDay (TimeOfDay, todHour, todMin))
+import Text.Printf
 import Text.Trifecta
 
 -- Exercises: Parsing Practice
@@ -149,3 +152,69 @@ parseLineNumber = read <$> digits 4
 
 digits :: Int -> Parser String
 digits n = replicateM n digit
+
+newtype Date = Date (Int, Int, Int)
+
+instance Show Date where
+  show (Date (year, month, day)) = printf "%04d" year ++ "-" ++ printf "%02d" month ++ "-" ++ printf "%02d" day
+
+data Activity = Activity TimeOfDay ActivityName
+
+instance Show Activity where
+  show (Activity time activity) =
+    printf "%02d" (todHour time)
+      ++ ":"
+      ++ printf "%02d" (todMin time)
+      ++ " "
+      ++ activity
+
+data Day = Day Date [Activity]
+
+instance Show Day where
+  show (Day date activities) =
+    "# "
+      ++ show date
+      ++ "\n"
+      ++ intercalate "\n" (fmap show activities)
+
+type ActivityName = String
+
+newtype Log = Log [Day]
+
+instance Show Log where
+  show (Log days) = intercalate "\n\n" (fmap show days)
+
+parseLog :: Parser Log
+parseLog = do
+  _ <- skipMany (void newline <|> parseComment)
+  days <- some parseDay
+  _ <- skipMany newline
+  return $ Log days
+
+parseDay :: Parser Day
+parseDay = liftA2 Day parseDate (some parseActivity)
+
+parseDate :: Parser Date
+parseDate = do
+  _ <- string "# "
+  year <- read <$> digits 4
+  _ <- char '-'
+  month <- read <$> digits 2
+  _ <- char '-'
+  day <- read <$> digits 2
+  _ <- skipOptional parseComment
+  _ <- newline
+  return $ Date (year, month, day)
+
+parseActivity :: Parser Activity
+parseActivity = do
+  hour <- read <$> digits 2
+  _ <- char ':'
+  minute <- read <$> digits 2
+  _ <- space
+  activity <- try (manyTill (noneOf "\n") (try parseComment)) <|> some (noneOf "\n")
+  _ <- skipMany newline
+  return $ Activity (TimeOfDay hour minute 0) activity
+
+parseComment :: Parser ()
+parseComment = skipOptional (char ' ') >> string "-- " >> skipMany (noneOf "\n")
