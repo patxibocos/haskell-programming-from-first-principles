@@ -6,6 +6,7 @@ import Data.Char
 import Data.List
 import Data.Ratio ((%))
 import Data.Time (TimeOfDay (TimeOfDay, todHour, todMin))
+import Data.Word
 import Text.Printf
 import Text.Trifecta
 
@@ -218,3 +219,25 @@ parseActivity = do
 
 parseComment :: Parser ()
 parseComment = skipOptional (char ' ') >> string "-- " >> skipMany (noneOf "\n")
+
+ipNumberPart :: Parser Integer
+ipNumberPart = do
+  n <- natural
+  if n > 255
+    then unexpected "out of range number (should be between 0 and 255)"
+    else return n
+
+newtype IPAddress = IPAddress Word32 deriving (Eq, Ord, Show)
+
+parseIpV4 :: Parser IPAddress
+parseIpV4 = do
+  p1 <- ipNumberPart
+  _ <- char '.'
+  p2 <- ipNumberPart
+  _ <- char '.'
+  p3 <- ipNumberPart
+  _ <- char '.'
+  p4 <- ipNumberPart
+  return $ (IPAddress . fromIntegral . sum) $ zipWith (\a b -> 256 ^ a * b) [3, 2 .. 0] [p1, p2, p3, p4]
+
+data IPAddress6 = IPAddress6 Word64 Word64 deriving (Eq, Ord, Show)
