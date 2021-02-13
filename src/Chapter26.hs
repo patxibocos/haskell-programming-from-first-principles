@@ -2,6 +2,9 @@
 
 module Chapter26 where
 
+import Control.Monad
+import Data.Bifunctor
+
 -- Exercises: EitherT
 
 newtype EitherT e m a = EitherT {runEitherT :: m (Either e a)}
@@ -37,3 +40,41 @@ eitherT fa fb (EitherT mab) = do
   case ab of
     (Left a) -> fa a
     (Right b) -> fb b
+
+-- Exercises: ReaderT
+
+newtype ReaderT r m a = ReaderT {runReaderT :: r -> m a}
+
+instance (Functor m) => Functor (ReaderT r m) where
+  fmap f (ReaderT rma) = ReaderT $ \r -> fmap f (rma r)
+
+instance (Applicative m) => Applicative (ReaderT r m) where
+  pure a = ReaderT (pure (pure a))
+
+  (ReaderT fmab) <*> (ReaderT rma) = ReaderT $ (<*>) <$> fmab <*> rma
+
+instance (Monad m) => Monad (ReaderT r m) where
+  return = pure
+
+  (>>=) :: ReaderT r m a -> (a -> ReaderT r m b) -> ReaderT r m b
+  (ReaderT rma) >>= f = ReaderT (\r -> rma r >>= \a -> (runReaderT $ f a) r)
+
+-- Exercises: StateT
+
+newtype StateT s m a = StateT {runStateT :: s -> m (a, s)}
+
+instance (Functor m) => Functor (StateT s m) where
+  fmap f (StateT sma) = StateT $ \s -> fmap (first f) (sma s)
+
+instance (Monad m) => Applicative (StateT s m) where
+  pure a = StateT $ \s -> pure (a, s)
+
+  (StateT smab) <*> (StateT sma) = StateT $ \s -> do
+    (fab, s1) <- smab s
+    (a, s2) <- sma s1
+    return (fab a, s2)
+
+instance (Monad m) => Monad (StateT s m) where
+  return = pure
+
+  (StateT sma) >>= f = StateT (sma >=> (\(a, s) -> (runStateT $ f a) s))
