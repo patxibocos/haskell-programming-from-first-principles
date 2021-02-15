@@ -1,8 +1,10 @@
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE TupleSections #-}
 
 module Chapter26 where
 
 import Control.Monad
+import Control.Monad.Trans (MonadTrans (lift))
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Maybe
 import qualified Control.Monad.Trans.Reader as R
@@ -86,3 +88,11 @@ instance (Monad m) => Monad (StateT s m) where
 
 embedded :: MaybeT (ExceptT String (R.ReaderT () IO)) Int
 embedded = MaybeT . ExceptT . R.ReaderT . fmap return $ const (Right (Just 1)) -- return must be lifted first to create the IO context
+
+-- Exercises: Lift More
+
+instance MonadTrans (EitherT e) where
+  lift = EitherT . fmap Right
+
+instance MonadTrans (StateT s) where
+  lift ma = StateT $ \s -> fmap (,s) ma

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8184a61fc909d3662b82c3b020ec3cb6168ac451a5750559dc32b72fe1464434
+-- hash: 1dd9afaa40b582ba8070c60e3df1606cf2d841a1dfcd070d67dcce4f8b707397
 
 name:           haskell
 version:        0.1.0.0
@@ -53,6 +53,7 @@ library
     , base >=4.7 && <5
     , checkers
     , hspec
+    , mtl
     , random
     , time
     , transformers
