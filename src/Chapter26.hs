@@ -4,9 +4,9 @@
 module Chapter26 where
 
 import Control.Monad
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.Trans (MonadTrans (lift))
 import Control.Monad.Trans.Except
-import Control.Monad.Trans.Maybe
 import qualified Control.Monad.Trans.Reader as R
 import Data.Bifunctor
 
@@ -86,13 +86,49 @@ instance (Monad m) => Monad (StateT s m) where
 
 -- Exercise: Wrap It Up
 
+newtype MaybeT m a = MaybeT {runMaybeT :: m (Maybe a)}
+
+instance Functor m => Functor (MaybeT m) where
+  fmap f (MaybeT ma) = MaybeT $ (fmap . fmap) f ma
+
+instance Applicative m => Applicative (MaybeT m) where
+  pure = MaybeT . pure . Just
+
+  (MaybeT mf) <*> (MaybeT ma) = MaybeT $ fmap (<*>) mf <*> ma
+
+instance Monad m => Monad (MaybeT m) where
+  return = pure
+
+  (MaybeT ma) >>= f = MaybeT $ do
+    a <- ma
+    case a of
+      Nothing -> return Nothing
+      (Just x) -> runMaybeT $ f x
+
 embedded :: MaybeT (ExceptT String (R.ReaderT () IO)) Int
 embedded = MaybeT . ExceptT . R.ReaderT . fmap return $ const (Right (Just 1)) -- return must be lifted first to create the IO context
 
 -- Exercises: Lift More
+
+instance MonadTrans MaybeT where
+  lift = MaybeT . fmap Just
 
 instance MonadTrans (EitherT e) where
   lift = EitherT . fmap Right
 
 instance MonadTrans (StateT s) where
   lift ma = StateT $ \s -> fmap (,s) ma
+
+instance MonadTrans (ReaderT r) where
+  lift = ReaderT . const
+
+-- Exercises: Some Instances
+
+instance (MonadIO m) => MonadIO (MaybeT m) where
+  liftIO = lift . liftIO
+
+instance (MonadIO m) => MonadIO (ReaderT r m) where
+  liftIO = lift . liftIO
+
+instance (MonadIO m) => MonadIO (StateT s m) where
+  liftIO = lift . liftIO
