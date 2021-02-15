@@ -3,6 +3,9 @@
 module Chapter26 where
 
 import Control.Monad
+import Control.Monad.Trans.Except
+import Control.Monad.Trans.Maybe
+import qualified Control.Monad.Trans.Reader as R
 import Data.Bifunctor
 
 -- Exercises: EitherT
@@ -78,3 +81,8 @@ instance (Monad m) => Monad (StateT s m) where
   return = pure
 
   (StateT sma) >>= f = StateT (sma >=> (\(a, s) -> (runStateT $ f a) s))
+
+-- Exercise: Wrap It Up
+
+embedded :: MaybeT (ExceptT String (R.ReaderT () IO)) Int
+embedded = MaybeT . ExceptT . R.ReaderT . fmap return $ const (Right (Just 1)) -- return must be lifted first to create the IO context
