@@ -1,17 +1,25 @@
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
 module Chapter26 where
 
 import Control.Monad
-import Control.Monad.IO.Class (MonadIO (liftIO))
-import Control.Monad.Trans (MonadTrans (lift))
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Class
 import Control.Monad.Trans.Except
-import qualified Control.Monad.Trans.Maybe as M
-import qualified Control.Monad.Trans.Reader as R
-import qualified Control.Monad.Trans.State as S
+import qualified Control.Monad.Trans.Maybe as TM
+import qualified Control.Monad.Trans.Reader as TR
+import qualified Control.Monad.Trans.State as TS
 import Data.Bifunctor
 import Data.Functor.Identity
+import Data.IORef
+import qualified Data.Map as M
+import Data.Maybe (fromMaybe)
+import Data.Text.Lazy (Text)
+import qualified Data.Text.Lazy as TL
+import System.Environment (getArgs)
+import Web.Scotty.Trans
 
 -- Exercises: EitherT
 
@@ -108,8 +116,8 @@ instance Monad m => Monad (MaybeT m) where
       Nothing -> return Nothing
       (Just x) -> runMaybeT $ f x
 
-embedded :: MaybeT (ExceptT String (R.ReaderT () IO)) Int
-embedded = MaybeT . ExceptT . R.ReaderT . fmap return $ const (Right (Just 1)) -- return must be lifted first to create the IO context
+embedded :: MaybeT (ExceptT String (TR.ReaderT () IO)) Int
+embedded = MaybeT . ExceptT . TR.ReaderT . fmap return $ const (Right (Just 1)) -- return must be lifted first to create the IO context
 
 -- Exercises: Lift More
 
@@ -140,22 +148,22 @@ instance (MonadIO m) => MonadIO (StateT s m) where
 
 -- Write the code
 
-rDec :: Num a => R.Reader a a
-rDec = R.ReaderT $ return . flip (-) 1
+rDec :: Num a => TR.Reader a a
+rDec = TR.ReaderT $ return . flip (-) 1
 
-rShow :: Show a => R.ReaderT a Identity String
-rShow = R.ReaderT $ return . show
+rShow :: Show a => TR.ReaderT a Identity String
+rShow = TR.ReaderT $ return . show
 
 sayHi :: (Show a, MonadIO m) => a -> m ()
 sayHi = liftIO . putStrLn . (++) "Hi: " . show
 
-rPrintAndInc :: (Num a, Show a) => R.ReaderT a IO a
-rPrintAndInc = R.ReaderT $ \r -> do
+rPrintAndInc :: (Num a, Show a) => TR.ReaderT a IO a
+rPrintAndInc = TR.ReaderT $ \r -> do
   sayHi r
   return $ r + 1
 
-sPrintIncAccum :: (Num a, Show a) => S.StateT a IO String
-sPrintIncAccum = S.StateT $ \s -> do
+sPrintIncAccum :: (Num a, Show a) => TS.StateT a IO String
+sPrintIncAccum = TS.StateT $ \s -> do
   sayHi s
   return (show s, s + 1)
 
@@ -164,7 +172,7 @@ sPrintIncAccum = S.StateT $ \s -> do
 isValid :: String -> Bool
 isValid v = '!' `elem` v
 
-maybeExcite :: M.MaybeT IO String
+maybeExcite :: TM.MaybeT IO String
 maybeExcite = do
   v <- liftIO getLine
   guard $ isValid v
@@ -173,7 +181,40 @@ maybeExcite = do
 doExcite :: IO ()
 doExcite = do
   putStrLn "say something excite!"
-  excite <- M.runMaybeT maybeExcite
+  excite <- TM.runMaybeT maybeExcite
   case excite of
     Nothing -> putStrLn "MOAR EXCITE"
     Just e -> putStrLn ("Good, was very excite: " ++ e)
+
+-- Hit counter
+
+data Config = Config
+  { counts :: IORef (M.Map Text Integer),
+    prefix :: Text
+  }
+
+type Scotty = ScottyT Text (TR.ReaderT Config IO)
+
+type Handler = ActionT Text (TR.ReaderT Config IO)
+
+bumpBoomp :: Text -> M.Map Text Integer -> (M.Map Text Integer, Integer)
+bumpBoomp k m = let v = 1 + fromMaybe 0 (M.lookup k m) in (M.insert k v m, v)
+
+app :: Scotty ()
+app = get "/:key" $ do
+  unprefixed <- param "key"
+  config <- lift TR.ask
+  let key' = mappend (prefix config) unprefixed
+  c <- liftIO $ readIORef (counts config)
+  let countsRef = counts config
+      (newCounts, newInteger) = bumpBoomp key' c
+  liftIO $ writeIORef countsRef newCounts
+  html $ mconcat ["<h1>Success! Count was: ", TL.pack $ show newInteger, "</h1>"]
+
+main :: IO ()
+main = do
+  [prefixArg] <- getArgs
+  counter <- newIORef M.empty
+  let config = Config counter (TL.pack prefixArg)
+      runR r = TR.runReaderT r config
+  scottyT 3000 runR app

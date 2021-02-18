@@ -32,3 +32,6 @@ library:
     - transformers
     - trifecta
     - mtl
+    - scotty
+    - containers
+    - text
