@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5aa741a1ad7ab142a12ef698c4ce7c9658168f342ce61f441f7e9c55161c7698
+-- hash: ab2bf91d6bff17df13c32c984bed9d896194c50ffcfa7b15d4fb2f747f1fb5d5
 
 name:           haskell
 version:        0.1.0.0
@@ -41,6 +41,7 @@ library
       Chapter25
       Chapter26
       Chapter27
+      Chapter28
       Chapter6
       Chapter7
       Chapter8
@@ -54,6 +55,7 @@ library
     , base >=4.7 && <5
     , checkers
     , containers
+    , criterion
     , hspec
     , mtl
     , random
@@ -62,4 +64,5 @@ library
     , time
     , transformers
     , trifecta
+    , vector
   default-language: Haskell2010

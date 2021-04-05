@@ -35,3 +35,5 @@ library:
     - scotty
     - containers
     - text
+    - criterion
+    - vector
